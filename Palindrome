@@ -2,33 +2,43 @@
 #include <stdio.h>
 #include <string.h>
 
-int max = 0;
-char longest[100][100];
+FILE *out;
 int count = 0;
-%}
 
-%%
+/* Modified function with no return statements */
+void checkAndLogPalindrome(char *str)
+{
+    int i, j;
+    int len = strlen(str);
+    int isPal = 1; // Flag assuming it is a palindrome
 
-[a-zA-Z][a-zA-Z0-9]*    {
-    int len = strlen(yytext);
-
-    if(len > max)
+    for (i = 0, j = len - 1; i < j; i++, j--)
     {
-        max = len;
-        count = 0;
-        strcpy(longest[count], yytext);
-        count++;
+        if (str[i] != str[j])
+        {
+            isPal = 0; // Set flag to false if match fails
+            break;     // Break out of loop immediately
+        }
     }
-    else if(len == max)
+
+    // Process output directly inside the function
+    if (isPal == 1)
     {
-        strcpy(longest[count], yytext);
+        fprintf(out, "%s\n", str);
         count++;
     }
 }
+%}
 
-[ \t\n]+    ;
+%%
+[0-9]+   {
+    // Simply call the processing function directly
+    checkAndLogPalindrome(yytext);
+}
 
-.           ;
+[ \t\n]+      ;
+
+.             ;
 
 %%
 
@@ -39,25 +49,32 @@ int yywrap()
 
 int main()
 {
-    yyin = fopen("input3.txt", "r");
+    FILE *in;
 
-    if(yyin == NULL)
+    in = fopen("palin.txt", "r");
+    if (in == NULL)
     {
         printf("Cannot open input file\n");
         return 1;
     }
 
-    yylex();
-
-    printf("Longest string length = %d\n", max);
-    printf("Longest strings:\n");
-
-    for(int i = 0; i < count; i++)
+    out = fopen("palindrome.txt", "w");
+    if (out == NULL)
     {
-        printf("%s\n", longest[i]);
+        printf("Cannot open output file\n");
+        fclose(in);
+        return 1;
     }
 
-    fclose(yyin);
+    yyin = in;
+    yyout = out;
+
+    yylex();
+
+    printf("Number of palindrome strings = %d\n", count);
+
+    fclose(in);
+    fclose(out);
 
     return 0;
 }
